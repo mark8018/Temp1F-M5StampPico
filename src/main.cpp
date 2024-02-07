@@ -1,6 +1,8 @@
 #include <Arduino.h>
 #include <WiFi.h>
 #include <WiFiClient.h>
+#include <WiFiClientSecure.h>
+#include <ssl_client.h>
 #include <WebServer.h>
 #include <ESPmDNS.h>
 #include <WiFiUdp.h>
@@ -14,11 +16,13 @@
 
 void ota_setup();
 void updateIOT(void);
+void LineSend(String message, const char *token);
 
 const char *ssid = "106F3F0E6E10_G";
 const char *password = "y87ux8ty75st4";
 const char *ntpServerName1 = "ntp.nict.jp";
 const char *hostname = "Temp1F-M5StampPico";
+const char *lineToken = "ZX71us6POf2azIB7OGO1BQpgI7f3ahBXKsSYFMz4teO";
 
 #define BUTTON_PIN 39 // M5StampPico
 #define SESPWR 26
@@ -34,6 +38,7 @@ bool update_now = false;
 #define RGB_BRIGHTNESS 1
 
 RTC_DATA_ATTR int bootCount = 0;
+RTC_DATA_ATTR int LineMseg = 0;
 
 BME280I2C::Settings settings(
     BME280::OSR_X4,
@@ -242,6 +247,14 @@ void updateIOT(void)
     Serial.println("Problem updating channel. HTTP error code " + String(x));
   }
   client.stop();
+
+  if (vcc < 3.0 && LineMseg == 0)
+  {
+    LineMseg = 1;
+    String mesg(hostname);
+    mesg += ": BATT Low " + String(vcc) + "V 電池交換だよ！";
+    LineSend(mesg, lineToken);
+  }
 }
 
 void ota_setup()
@@ -275,4 +288,44 @@ void ota_setup()
     ESP.restart(); });
 
   ArduinoOTA.begin();
+}
+
+void LineSend(String message, const char *token)
+{
+  const char *host = "notify-api.line.me";
+
+  WiFiClientSecure client;
+  Serial.println("Try");
+  client.setInsecure();
+  // LineのAPIサーバに接続
+  if (!client.connect(host, 443))
+  {
+    Serial.println("Connection failed");
+    return;
+  }
+  Serial.println("Connected");
+  // リクエストを送信
+  String query = String("message=") + message;
+  String request = String("") +
+                   "POST /api/notify HTTP/1.1\r\n" +
+                   "Host: " + host + "\r\n" +
+                   "Authorization: Bearer " + token + "\r\n" +
+                   "Content-Length: " + String(query.length()) + "\r\n" +
+                   "Content-Type: application/x-www-form-urlencoded\r\n\r\n" +
+                   query + "\r\n";
+  client.print(request);
+
+  // 受信終了まで待つ
+  while (client.connected())
+  {
+    String line = client.readStringUntil('\n');
+    Serial.println(line);
+    if (line == "\r")
+    {
+      break;
+    }
+  }
+
+  String line = client.readStringUntil('\n');
+  Serial.println(line);
 }
