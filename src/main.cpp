@@ -248,7 +248,7 @@ void updateIOT(void)
   }
   client.stop();
 
-  if (vcc < 3.0 && LineMseg == 0)
+  if (vcc < 3.1 && LineMseg == 0)
   {
     LineMseg = 1;
     String mesg(hostname);
