@@ -20,7 +20,7 @@ void LineSend(String message, const char *token);
 
 const char *ssid = "106F3F0E6E10_G";
 const char *password = "y87ux8ty75st4";
-const char *ntpServerName1 = "ntp.nict.jp";
+const char *ntpServerName1 = "ntp.jst.mfeed.ad.jp";
 const char *hostname = "Temp1F-M5StampPico";
 const char *lineToken = "ZX71us6POf2azIB7OGO1BQpgI7f3ahBXKsSYFMz4teO";
 
@@ -35,7 +35,7 @@ bool update_now = false;
 #define BF_WAKE_SEC 10
 #define UPTIME 3
 #define ON_SEC 13
-#define RGB_BRIGHTNESS 1
+#define RGB_BRT 1
 
 RTC_DATA_ATTR int bootCount = 0;
 RTC_DATA_ATTR int LineMseg = 0;
@@ -123,7 +123,7 @@ void setup()
   digitalWrite(SESPWR, 1);
 
   digitalWrite(PIXEL_PIN, LOW);                   // Turn the RGB LED off
-  neopixelWrite(PIXEL_PIN, RGB_BRIGHTNESS, 0, 0); // Red
+  neopixelWrite(PIXEL_PIN, RGB_BRT, 0, 0); // Red
 
   Serial.begin(115200);
   delay(1000); // Take some time to open up the Serial Monitor
@@ -145,7 +145,7 @@ void setup()
   {
     Serial.print(".");
     retries++;
-    neopixelWrite(PIXEL_PIN, 0, 0, RGB_BRIGHTNESS); // Blue
+    neopixelWrite(PIXEL_PIN, 0, 0, RGB_BRT); // Blue
     delay(1000);
   }
   if (WiFi.status() != WL_CONNECTED)
@@ -154,7 +154,7 @@ void setup()
     neopixelWrite(PIXEL_PIN, 0, 0, 0); // Off / black
     ESP.restart();
   }
-  neopixelWrite(PIXEL_PIN, 0, RGB_BRIGHTNESS, 0); // Green
+  neopixelWrite(PIXEL_PIN, 0, RGB_BRT, 0); // Green
   Serial.println("WiFi connected");
   Serial.print("IP address: ");
   Serial.println(WiFi.localIP());
